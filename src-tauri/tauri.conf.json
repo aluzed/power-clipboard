@@ -1,0 +1,48 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicegui/nicegui/main/tauri/tauri.conf.schema.json",
+  "productName": "Power Clipboard",
+  "version": "0.1.0",
+  "identifier": "com.powerclipboard.desktop",
+  "build": {
+    "frontendDist": "../ui"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "macOSPrivateApi": true,
+    "windows": [
+      {
+        "label": "overlay",
+        "url": "overlay/index.html",
+        "visible": false,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "resizable": false,
+        "width": 280,
+        "height": 240,
+        "focus": false
+      },
+      {
+        "label": "settings",
+        "url": "settings/index.html",
+        "visible": false,
+        "title": "Power Clipboard - Settings",
+        "width": 500,
+        "height": 350,
+        "resizable": false,
+        "center": true
+      }
+    ]
+  },
+  "bundle": {
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
+  "plugins": {}
+}
