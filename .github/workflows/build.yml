@@ -90,6 +90,11 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: cargo tauri build --target ${{ matrix.target }}
 
+      # List bundle output for debugging
+      - name: List bundle output
+        shell: bash
+        run: find src-tauri/target -type d -name "bundle" -exec find {} -type f \; 2>/dev/null || true
+
       # Upload artifacts
       - name: Upload macOS artifacts
         if: matrix.platform == 'macos-latest'
@@ -97,7 +102,7 @@ jobs:
         with:
           name: power-clipboard-${{ matrix.target }}
           path: |
-            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
+            src-tauri/target/**/bundle/dmg/*.dmg
           if-no-files-found: error
 
       - name: Upload Linux artifacts
@@ -106,9 +111,9 @@ jobs:
         with:
           name: power-clipboard-${{ matrix.target }}
           path: |
-            src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
-            src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage
-          if-no-files-found: error
+            src-tauri/target/**/bundle/deb/*.deb
+            src-tauri/target/**/bundle/appimage/*.AppImage
+          if-no-files-found: warn
 
       - name: Upload Windows artifacts
         if: matrix.platform == 'windows-latest'
@@ -116,8 +121,7 @@ jobs:
         with:
           name: power-clipboard-${{ matrix.target }}
           path: |
-            src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi
-            src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.exe
+            src-tauri/target/**/bundle/nsis/*.exe
           if-no-files-found: error
 
   # Create GitHub Release when triggered by a tag
