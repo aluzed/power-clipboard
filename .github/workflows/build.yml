@@ -89,7 +89,15 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: cargo tauri build --target ${{ matrix.target }} --bundles nsis,deb,appimage,dmg
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            cargo tauri build --target ${{ matrix.target }} --bundles deb,appimage
+          elif [ "$RUNNER_OS" = "Windows" ]; then
+            cargo tauri build --target ${{ matrix.target }} --bundles nsis
+          else
+            cargo tauri build --target ${{ matrix.target }} --bundles dmg
+          fi
 
       # List bundle output for debugging
       - name: List bundle output
