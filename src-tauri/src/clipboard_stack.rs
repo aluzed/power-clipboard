@@ -13,6 +13,7 @@ pub struct ClipboardStack {
     items: VecDeque<String>,
     max_size: usize,
     pub current_index: Option<usize>,
+    pub navigating: bool,
 }
 
 impl ClipboardStack {
@@ -21,6 +22,7 @@ impl ClipboardStack {
             items: VecDeque::new(),
             max_size,
             current_index: None,
+            navigating: false,
         }
     }
 
@@ -46,6 +48,7 @@ impl ClipboardStack {
         if self.items.is_empty() {
             return None;
         }
+        self.navigating = true;
         match self.current_index {
             None => {
                 self.current_index = Some(0);
@@ -63,6 +66,7 @@ impl ClipboardStack {
         if self.items.is_empty() {
             return None;
         }
+        self.navigating = true;
         match self.current_index {
             None => {
                 // First press: skip index 0 (current clipboard) and go to index 1
@@ -88,6 +92,7 @@ impl ClipboardStack {
 
     pub fn reset_index(&mut self) {
         self.current_index = None;
+        self.navigating = false;
     }
 
     pub fn set_max_size(&mut self, n: usize) {

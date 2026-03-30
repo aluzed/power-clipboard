@@ -25,11 +25,17 @@ pub fn start_clipboard_monitor(app: AppHandle) {
                 last_known = current.clone();
 
                 let state = app.state::<AppState>();
-                let preview = {
-                    let mut stack = state.stack.lock().unwrap();
-                    stack.push(current);
-                    stack.items_preview()
-                };
+                let mut stack = state.stack.lock().unwrap();
+
+                // Skip push if navigating — the clipboard change was caused by navigation,
+                // not by the user copying something new.
+                if stack.navigating {
+                    continue;
+                }
+
+                stack.push(current);
+                let preview = stack.items_preview();
+                drop(stack);
 
                 let _ = app.emit("clipboard-updated", preview);
             }

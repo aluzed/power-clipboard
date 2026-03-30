@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Power Clipboard — Stack your copies</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <meta name="description" content="The best clipboard manager ever. Stack everything you copy. Navigate your clipboard history with a keystroke.">
+  <meta name="theme-color" content="#a78bfa">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --violet: #a78bfa;
+      --violet-light: #c4b5fd;
+      --pink: #f0abfc;
+      --blue: #93c5fd;
+      --mint: #6ee7b7;
+      --peach: #fca5a5;
+      --yellow: #fde68a;
+      --bg: #faf5ff;
+      --text: #1e1b4b;
+      --text-muted: #6b7280;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* Animated gradient background blobs */
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.4;
+      z-index: 0;
+      animation: float 20s ease-in-out infinite;
+    }
+    .blob-1 { width: 600px; height: 600px; background: var(--violet-light); top: -200px; left: -100px; }
+    .blob-2 { width: 500px; height: 500px; background: var(--pink); top: 300px; right: -150px; animation-delay: -7s; }
+    .blob-3 { width: 450px; height: 450px; background: var(--blue); bottom: -100px; left: 30%; animation-delay: -14s; }
+    .blob-4 { width: 350px; height: 350px; background: var(--mint); top: 60%; left: -100px; animation-delay: -3s; }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(30px, -40px) scale(1.05); }
+      50% { transform: translate(-20px, 20px) scale(0.95); }
+      75% { transform: translate(40px, 30px) scale(1.02); }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Nav */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 0;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text);
+    }
+    .nav-brand img {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+    }
+    .nav-brand span {
+      font-weight: 800;
+      font-size: 1.2rem;
+    }
+    .nav-links {
+      display: flex;
+      gap: 8px;
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 500;
+      font-size: 0.9rem;
+      padding: 8px 16px;
+      border-radius: 10px;
+      transition: background 0.2s;
+    }
+    .nav-links a:hover {
+      background: rgba(167, 139, 250, 0.15);
+    }
+    .nav-links .btn-gh {
+      background: var(--text);
+      color: white;
+      border-radius: 12px;
+      padding: 8px 20px;
+    }
+    .nav-links .btn-gh:hover {
+      background: #312e81;
+    }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 100px 0 80px;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--violet-light), var(--pink));
+      color: var(--text);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 6px 18px;
+      border-radius: 100px;
+      margin-bottom: 28px;
+      letter-spacing: 0.5px;
+    }
+    .hero h1 {
+      font-size: clamp(2.8rem, 6vw, 4.5rem);
+      font-weight: 900;
+      line-height: 1.08;
+      margin-bottom: 24px;
+      letter-spacing: -0.03em;
+    }
+    .hero h1 .gradient {
+      background: linear-gradient(135deg, var(--violet), #7c3aed, var(--pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      max-width: 520px;
+      margin: 0 auto 40px;
+      line-height: 1.6;
+    }
+    .hero-buttons {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 32px;
+      border-radius: 16px;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.25s;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--violet), #7c3aed);
+      color: white;
+      box-shadow: 0 4px 20px rgba(124, 58, 237, 0.35);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(124, 58, 237, 0.45);
+    }
+    .btn-secondary {
+      background: white;
+      color: var(--text);
+      border: 2px solid #e5e7eb;
+    }
+    .btn-secondary:hover {
+      border-color: var(--violet);
+      transform: translateY(-2px);
+    }
+
+    /* Demo */
+    .demo {
+      text-align: center;
+      padding: 20px 0 100px;
+    }
+    .demo-window {
+      display: inline-block;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04);
+      overflow: hidden;
+      max-width: 600px;
+      width: 100%;
+    }
+    .demo-titlebar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 18px;
+      background: #f9fafb;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .demo-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    .demo-dot:nth-child(1) { background: var(--peach); }
+    .demo-dot:nth-child(2) { background: var(--yellow); }
+    .demo-dot:nth-child(3) { background: var(--mint); }
+    .demo-window img {
+      width: 100%;
+      display: block;
+    }
+
+    /* Features */
+    .features {
+      padding: 80px 0;
+    }
+    .features-header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+    .features-header h2 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+    .features-header p {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .feature-card {
+      background: rgba(255,255,255,0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.8);
+      border-radius: 20px;
+      padding: 36px 30px;
+      transition: all 0.3s;
+    }
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.06);
+    }
+    .feature-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+    }
+    .fi-violet { background: linear-gradient(135deg, #ede9fe, #ddd6fe); }
+    .fi-pink { background: linear-gradient(135deg, #fce7f3, #fbcfe8); }
+    .fi-blue { background: linear-gradient(135deg, #dbeafe, #bfdbfe); }
+    .fi-mint { background: linear-gradient(135deg, #d1fae5, #a7f3d0); }
+    .fi-peach { background: linear-gradient(135deg, #fee2e2, #fecaca); }
+    .fi-yellow { background: linear-gradient(135deg, #fef3c7, #fde68a); }
+    .feature-card h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .feature-card p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    /* Keyboard shortcut display */
+    .shortcut {
+      padding: 60px 0 100px;
+    }
+    .shortcut-box {
+      background: white;
+      border-radius: 24px;
+      padding: 60px 40px;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+      border: 1px solid #f3f4f6;
+    }
+    .shortcut-box h2 {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+    .shortcut-box > p {
+      color: var(--text-muted);
+      margin-bottom: 40px;
+      font-size: 1.05rem;
+    }
+    .keys-row {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+    .key-combo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .key-combo .keys {
+      display: flex;
+      gap: 6px;
+    }
+    .kbd {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 44px;
+      height: 44px;
+      padding: 0 14px;
+      background: linear-gradient(180deg, #f9fafb, #f3f4f6);
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      box-shadow: 0 2px 0 #d1d5db;
+    }
+    .key-combo .label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Platforms */
+    .platforms {
+      padding: 0 0 100px;
+      text-align: center;
+    }
+    .platforms h2 {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+    .platforms > p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      margin-bottom: 40px;
+    }
+    .platform-pills {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      background: white;
+      border: 2px solid #f3f4f6;
+      border-radius: 16px;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: all 0.25s;
+    }
+    .pill:hover {
+      border-color: var(--violet);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
+    .pill svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    /* CTA */
+    .cta {
+      padding: 0 0 120px;
+      text-align: center;
+    }
+    .cta-box {
+      background: linear-gradient(135deg, #7c3aed, #a78bfa, var(--pink));
+      border-radius: 28px;
+      padding: 70px 40px;
+      color: white;
+    }
+    .cta-box h2 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+    .cta-box p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+      margin-bottom: 36px;
+    }
+    .btn-white {
+      background: white;
+      color: #7c3aed;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .btn-white:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid #f3f4f6;
+      padding: 30px 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+    footer a {
+      color: var(--violet);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    /* Animations on scroll */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.6s ease-out;
+    }
+    .fade-up.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 640px) {
+      .hero { padding: 60px 0 50px; }
+      .nav-links a:not(.btn-gh) { display: none; }
+      .keys-row { gap: 24px; }
+      .shortcut-box { padding: 40px 20px; }
+      .cta-box { padding: 50px 24px; }
+      .features-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="blob blob-4"></div>
+
+  <div class="container">
+    <!-- Nav -->
+    <nav>
+      <a class="nav-brand" href="#">
+        <img src="icon.png" alt="Power Clipboard">
+        <span>Power Clipboard</span>
+      </a>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#shortcuts">Shortcuts</a>
+        <a class="btn-gh" href="https://github.com/apenombre/power-clipboard" target="_blank">GitHub</a>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero fade-up">
+      <div class="hero-badge">Built with Tauri v2</div>
+      <h1>Stack your copies.<br><span class="gradient">Navigate with a keystroke.</span></h1>
+      <p>The clipboard manager you didn't know you needed. Every copy stacks up. Every paste is a choice.</p>
+      <div class="hero-buttons">
+        <a class="btn btn-primary" href="https://github.com/apenombre/power-clipboard/releases" target="_blank">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download
+        </a>
+        <a class="btn btn-secondary" href="https://github.com/apenombre/power-clipboard" target="_blank">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          Source Code
+        </a>
+      </div>
+    </section>
+
+    <!-- Demo -->
+    <section class="demo fade-up">
+      <div class="demo-window">
+        <div class="demo-titlebar">
+          <div class="demo-dot"></div>
+          <div class="demo-dot"></div>
+          <div class="demo-dot"></div>
+        </div>
+        <img src="demo.gif" alt="Power Clipboard demo">
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features" id="features">
+      <div class="features-header fade-up">
+        <h2>Everything you need, nothing you don't</h2>
+        <p>Lightweight, native, and blazingly fast.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card fade-up">
+          <div class="feature-icon fi-violet">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </div>
+          <h3>Clipboard Stacking</h3>
+          <p>Every copy pushes to a stack. No duplicates, no clutter. Your clipboard history, always ready.</p>
+        </div>
+        <div class="feature-card fade-up">
+          <div class="feature-icon fi-pink">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c026d3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          </div>
+          <h3>Keyboard Navigation</h3>
+          <p>Cycle through your history with a single shortcut. The selected item is instantly ready to paste.</p>
+        </div>
+        <div class="feature-card fade-up">
+          <div class="feature-icon fi-blue">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <h3>Minimal Overlay</h3>
+          <p>A sleek floating list appears when you navigate. Auto-hides after 2 seconds. Zero distraction.</p>
+        </div>
+        <div class="feature-card fade-up">
+          <div class="feature-icon fi-mint">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <h3>Privacy First</h3>
+          <p>Only the first 2 characters of each item are displayed. Your sensitive data stays hidden.</p>
+        </div>
+        <div class="feature-card fade-up">
+          <div class="feature-icon fi-peach">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </div>
+          <h3>Configurable</h3>
+          <p>Adjust stack size from 1 to 50 items. Tailor it to your workflow, your way.</p>
+        </div>
+        <div class="feature-card fade-up">
+          <div class="feature-icon fi-yellow">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </div>
+          <h3>System Tray</h3>
+          <p>Lives quietly in your menu bar. No dock icon clutter. Right-click for settings or quit.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Shortcuts -->
+    <section class="shortcut" id="shortcuts">
+      <div class="shortcut-box fade-up">
+        <h2>Dead simple shortcuts</h2>
+        <p>Two combos. That's all you need.</p>
+        <div class="keys-row">
+          <div class="key-combo">
+            <div class="keys">
+              <span class="kbd">Cmd</span>
+              <span class="kbd">Shift</span>
+              <span class="kbd">&darr;</span>
+            </div>
+            <span class="label">Next item in stack</span>
+          </div>
+          <div class="key-combo">
+            <div class="keys">
+              <span class="kbd">Cmd</span>
+              <span class="kbd">Shift</span>
+              <span class="kbd">&uarr;</span>
+            </div>
+            <span class="label">Previous item in stack</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Platforms -->
+    <section class="platforms fade-up">
+      <h2>Cross-platform</h2>
+      <p>Native performance on every OS. Built with Tauri v2 and Rust.</p>
+      <div class="platform-pills">
+        <div class="pill">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          macOS
+        </div>
+        <div class="pill">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 12V6.75l6-1.32v6.48L3 12zm6.12 0l.01 6.65-6.13-1.24V12h6.12zm.81-6.74L22 3v8.99l-12.07.01V5.26zM22 12.01L22 21l-12.07-1.73V12h12.07z"/></svg>
+          Windows
+        </div>
+        <div class="pill">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.504 0c-.155 0-.311.015-.465.045C9.792.456 8.333 2.273 8.333 4.5c0 .725.167 1.408.464 2.015C7.03 6.88 5.667 8.18 5.667 10c0 1.39.633 2.627 1.625 3.45-.084.348-.125.71-.125 1.05 0 2.485 2.015 4.5 4.5 4.5.555 0 1.09-.1 1.583-.283v3.616c0 .925.75 1.667 1.667 1.667s1.666-.742 1.666-1.667v-3.616c.494.184 1.028.283 1.584.283 2.484 0 4.5-2.015 4.5-4.5 0-.34-.042-.702-.125-1.05.991-.823 1.625-2.06 1.625-3.45 0-1.82-1.364-3.12-3.13-3.485.296-.607.464-1.29.464-2.015C21.5 2.273 20.04.456 17.794.045 17.638.015 17.482 0 17.327 0c-1.573 0-2.994.968-3.577 2.44L12.918 4.5h-1.836L10.25 2.44C9.666.968 8.246 0 6.673 0H12.504z"/></svg>
+          Linux
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta fade-up">
+      <div class="cta-box">
+        <h2>Ready to level up your clipboard?</h2>
+        <p>Free, open-source, and ridiculously fast.</p>
+        <a class="btn btn-white" href="https://github.com/apenombre/power-clipboard/releases" target="_blank">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download Now
+        </a>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <div class="container">
+      Power Clipboard &mdash; Made with Rust & Tauri. <a href="https://github.com/apenombre/power-clipboard" target="_blank">View on GitHub</a>
+    </div>
+  </footer>
+
+  <script>
+    // Scroll-triggered fade-in animations
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
